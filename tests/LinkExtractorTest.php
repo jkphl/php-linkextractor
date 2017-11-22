@@ -6,13 +6,12 @@
  *
  * @author    Martijn van der Ven <martijn@vanderven.se>
  * @author    Christian Weiske <cweiske@cweiske.de>
+ * @author    Joschi Kuphal <joschi@tollwerk.de>
  * @copyright 2017 Martijn van der Ven and authors
  * @license   BSD Zero Clause License
  * @version   0.1.0
  * @link      https://github.com/Zegnat/php-linkextractor
  */
-
-declare(strict_types=1);
 
 namespace Zegnat\LinkExtractor;
 
@@ -29,7 +28,7 @@ class LinkExtractorTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expectedUrls, $extractor->extract());
     }
 
-    public function filesProvider(): array
+    public function filesProvider()
     {
         $htmlfiles = glob(__DIR__ . '/files/*.html');
         natsort($htmlfiles);

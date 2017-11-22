@@ -9,6 +9,7 @@
  * PHP version 7
  *
  * @author    Martijn van der Ven <martijn@vanderven.se>
+ * @author    Joschi Kuphal <joschi@tollwerk.de>
  * @copyright 2017 Martijn van der Ven
  * @license   BSD Zero Clause License
  * @version   0.1.0
@@ -16,13 +17,10 @@
  * @see       https://github.com/w3c/webmention/issues/91 The discussion that prompted this.
  */
 
-declare(strict_types=1);
-
 namespace Zegnat\LinkExtractor;
 
 use League\Uri\Schemes\Http;
 use League\Uri\Modifiers\Resolve;
-use League\Uri\UriException;
 
 /**
  * LinkExtractor class for finding all linked resources in an HTML document.
@@ -58,10 +56,10 @@ class LinkExtractor
      **/
     private $htmlSpaceCharacters = ' \t\n\f\r';
 
-    /** @var DOMNode $root */
+    /** @var \DOMNode $root */
     private $root;
 
-    /** @var XPath $root */
+    /** @var \DOMXPath $root */
     private $xpath;
 
     /** @var string $baseUrl */
@@ -79,7 +77,7 @@ class LinkExtractor
      *
      * @see https://www.w3.org/TR/html5/infrastructure.html#strip-leading-and-trailing-whitespace
      **/
-    private function htmlStripWhitespace(string $string): string
+    private function htmlStripWhitespace($string)
     {
         return \preg_replace(\sprintf('@^[%1$s]*|[%1$s]*$@', $this->htmlSpaceCharacters), '', $string);
     }
@@ -91,12 +89,12 @@ class LinkExtractor
      *
      * @return string
      **/
-    private function resolveUrl(string $url): string
+    private function resolveUrl($url)
     {
         $resolver = new Resolve($this->baseUrl);
         try {
-            return \strval($resolver->process(Http::createFromString($url)));
-        } catch (UriException $e) {
+            return \strval($resolver(Http::createFromString($url)));
+        } catch (\InvalidArgumentException $e) {
             return $url;
         }
     }
@@ -114,11 +112,11 @@ class LinkExtractor
      * @param \DOMNode $root    Any DOMNode, including the entire DOMDocument, to use as root.
      * @param string   $baseUrl The URL for the document, to resolve relative URLs against.
      *
-     * @throws League\Uri\UriException If the BASE element’s HREF could not be parsed as HTTP valid.
+     * @throws \InvalidArgumentException If the BASE element’s HREF could not be parsed as HTTP valid.
      *
      * @api
      **/
-    public function __construct(\DOMNode $root, string $baseUrl = '')
+    public function __construct(\DOMNode $root, $baseUrl = '')
     {
         $this->root = $root;
         $ownerDocument = $root instanceof \DOMDocument ? $root : $root->ownerDocument;
@@ -131,7 +129,7 @@ class LinkExtractor
         if ($base !== false && $base->length > 0) {
             $baseElementUrl = Http::createFromString($this->htmlStripWhitespace($base->item(0)->getAttribute('href')));
             $resolver = new Resolve($baseUrl);
-            $baseUrl = $resolver->process($baseElementUrl);
+            $baseUrl = $resolver($baseElementUrl);
         }
 
         $this->baseUrl = $baseUrl;
@@ -144,7 +142,7 @@ class LinkExtractor
      *
      * @api
      **/
-    public function extract(): array
+    public function extract()
     {
         if (\is_array($this->extracted)) {
             return $this->extracted;
@@ -155,7 +153,7 @@ class LinkExtractor
                     \array_keys($this->urlAttributes),
                     \array_keys($this->nonEmptyUrlAttributes)
                 )),
-                function (string $xpath, string $attribute): string {
+                function ($xpath, $attribute) {
                     return $xpath . ' | .//@' . $attribute;
                 },
                 ''
@@ -195,7 +193,7 @@ class LinkExtractor
      *
      * @api
      **/
-    public function linksTo(string $url): bool
+    public function linksTo($url)
     {
         return \in_array($this->resolveUrl($url), $this->extract());
     }
